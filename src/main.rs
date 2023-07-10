@@ -1,3 +1,5 @@
+use std::collections::{HashSet, VecDeque};
+
 use cube::{Color, Cube};
 use image::{ImageBuffer, Rgb};
 use turn::Turnable;
@@ -32,8 +34,41 @@ fn save_cube(cube: &Cube) {
 }
 
 fn main() {
+    let mut positions = HashSet::new();
     let mut cube = Cube::default();
-    cube.r();
-    cube.u();
-    save_cube(&dbg!(cube));
+
+    let mut queue = VecDeque::from([cube]);
+    while let Some(next) = queue.pop_front() {
+        positions.insert(next);
+        let mut new_state = next;
+        new_state.f();
+
+        if positions.insert(new_state) {
+            queue.push_back(new_state);
+        }
+        let mut new_state = next;
+        new_state.r();
+        if positions.insert(new_state) {
+            queue.push_back(new_state);
+        }
+        // let mut new_state = next;
+        // new_state.rprime();
+        // if positions.insert(new_state) {
+        //     queue.push_back(new_state);
+        // }
+        // let mut new_state = next;
+        // new_state.u();
+        // if positions.insert(new_state) {
+        //     queue.push_back(new_state);
+        // }
+        // let mut new_state = next;
+        // new_state.uprime();
+        // if positions.insert(new_state) {
+        //     queue.push_back(new_state);
+        // }
+
+        if positions.len() % 100000 == 0 {
+            println!("{}", positions.len())
+        }
+    }
 }

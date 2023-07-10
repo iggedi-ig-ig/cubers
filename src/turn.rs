@@ -133,7 +133,20 @@ impl Turnable for Cube {
     }
 
     fn f(&mut self) {
-        todo!()
+        let top = self.top();
+        let right = self.right();
+        let bottom = self.bottom();
+        let left = self.left();
+
+        self.front_mut().cycle_edges_cw();
+        self.right_mut()
+            .copy_from_positions(&top, &[(6, 0), (7, 3), (8, 6)]);
+        self.bottom_mut()
+            .copy_from_positions(&right, &[(0, 2), (3, 1), (6, 0)]);
+        self.left_mut()
+            .copy_from_positions(&bottom, &[(0, 2), (1, 5), (2, 8)]);
+        self.top_mut()
+            .copy_from_positions(&left, &[(2, 8), (5, 7), (8, 6)])
     }
 }
 
@@ -183,6 +196,30 @@ mod tests {
         cube.uprime();
         cube.uprime();
         cube.uprime();
+
+        assert_eq!(cube, Cube::default());
+    }
+
+    #[test]
+    fn f_order() {
+        let mut cube = Cube::default();
+
+        cube.f();
+        cube.f();
+        cube.f();
+        cube.f();
+
+        assert_eq!(cube, Cube::default());
+    }
+
+    #[test]
+    fn f_prime_order() {
+        let mut cube = Cube::default();
+
+        cube.fprime();
+        cube.fprime();
+        cube.fprime();
+        cube.fprime();
 
         assert_eq!(cube, Cube::default());
     }
