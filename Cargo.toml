@@ -7,4 +7,4 @@ edition = "2021"
 
 [dependencies]
 itertools = "0.10.5"
-kiss3d = "0.35.0"
+image = "0.24.6"
