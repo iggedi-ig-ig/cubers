@@ -1,199 +1,307 @@
+use std::fmt::Display;
+use std::ops::Index;
+use std::ops::IndexMut;
+
+use itertools::Itertools;
+
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
-pub enum PieceType {
+pub enum Cubie {
     Center(Color),
     Edge([Color; 2]),
     Corner([Color; 3]),
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+#[repr(u8)]
 pub enum Color {
-    White,
-    Yellow,
-    Green,
-    Blue,
-    Orange,
-    Red,
+    White = 0b000001,
+    Yellow = 0b000010,
+    Green = 0b000100,
+    Blue = 0b001000,
+    Orange = 0b010000,
+    Red = 0b100000,
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub struct CubeFace {
+    data: u64,
+}
+
+impl Display for CubeFace {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let vec = (0..8).map(|i| self.get_at(i)).collect_vec();
+        f.debug_struct("CubeFace").field("data", &vec).finish()
+    }
+}
+
+impl CubeFace {
+    pub fn new(colors: &[Color]) -> Self {
+        let mut data = colors
+            .into_iter()
+            .enumerate()
+            .fold(0, |curr, (i, &acc)| curr | ((acc as u64) << (6 * i)));
+
+        Self { data }
+    }
+
+    pub fn get_at(&self, index: usize) -> Color {
+        let mask = 0x3F << (6 * index);
+
+        match mask >> (6 * index) {
+            0b000001 => Color::White,
+            0b000010 => Color::Yellow,
+            0b000100 => Color::Green,
+            0b001000 => Color::Blue,
+            0b010000 => Color::Orange,
+            0b100000 => Color::Red,
+            flag => panic!("invalid color flag: {flag:b}"),
+        }
+    }
+
+    pub fn set_at(&mut self, index: usize, color: Color) {
+        let mask = 0x3F << (6 * index);
+        self.data &= !mask;
+        self.data |= (color as u64) << (6 * index);
+    }
+
+    pub fn copy_from_mask(&mut self, from: &Self, mask: u64) {
+        let masked = from.data & mask;
+        self.data &= !mask;
+        self.data |= masked;
+    }
+
+    pub fn rotate_cw(&mut self) {
+        let zero = self.get_at(0);
+        let one = self.get_at(1);
+        let two = self.get_at(2);
+        let three = self.get_at(3);
+        let five = self.get_at(5);
+        let six = self.get_at(6);
+        let seven = self.get_at(7);
+        let eight = self.get_at(8);
+        self.set_at(0, six);
+        self.set_at(1, three);
+        self.set_at(2, zero);
+        self.set_at(3, seven);
+        self.set_at(5, one);
+        self.set_at(6, eight);
+        self.set_at(7, five);
+        self.set_at(8, two);
+    }
+
+    pub fn rotate_ccw(&mut self) {
+        // TODO: this is slower
+        self.rotate_cw();
+        self.rotate_cw();
+        self.rotate_cw();
+    }
+
+    pub fn red() -> Self {
+        Self::new(&[Color::Red; 8])
+    }
+
+    pub fn orange() -> Self {
+        Self::new(&[Color::Orange; 8])
+    }
+
+    pub fn green() -> Self {
+        Self::new(&[Color::Green; 8])
+    }
+
+    pub fn blue() -> Self {
+        Self::new(&[Color::Blue; 8])
+    }
+
+    pub fn white() -> Self {
+        Self::new(&[Color::White; 8])
+    }
+
+    pub fn yellow() -> Self {
+        Self::new(&[Color::Yellow; 8])
+    }
+}
+
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash, PartialOrd, Ord)]
+#[repr(usize)]
+enum FaceIndex {
+    Left,
+    Right,
+    Top,
+    Bottom,
+    Front,
+    Back,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
 pub struct Cube3x3 {
-    /// Stores the parts of a 3x3 cube when looking at it with green side towards you with white side up,
-    /// starting at top left corner walking towards positive x
-    data: [PieceType; 26],
+    /// Stores the 6 faces of the cube. When looking at it from the green site with white site on top,
+    /// stored in LEFT RIGHT TOP BOTTOM FRONT BACK order
+    /// (so orange, red, white, yellow, green, blue)
+    ///
+    /// Index order is like this
+    ///         + --- +
+    ///         | 012 |
+    ///         | 345 |
+    ///         | 678 |
+    ///   + --- + --- + --- + --- +
+    ///   | 012 | 012 | 012 | 012 |
+    ///   | 345 | 345 | 345 | 345 |
+    ///   | 678 | 678 | 678 | 678 |
+    ///   + --- + --- + --- + --- +
+    ///         | 012 |
+    ///         | 345 |
+    ///         | 678 |
+    ///         + --- +     
+    data: [CubeFace; 6],
 }
 
 impl Default for Cube3x3 {
     fn default() -> Self {
-        use Color::*;
         Self {
             data: [
-                PieceType::Corner([White, Green, Orange]),  // 0
-                PieceType::Edge([White, Green]),            // 1
-                PieceType::Corner([White, Red, Green]),     // 2
-                PieceType::Edge([White, Orange]),           // 3
-                PieceType::Center(White),                   // 4
-                PieceType::Edge([White, Red]),              // 5
-                PieceType::Corner([White, Orange, Blue]),   // 6
-                PieceType::Edge([White, Blue]),             // 7
-                PieceType::Corner([White, Blue, Red]),      // 8
-                PieceType::Edge([Green, Orange]),           // 9
-                PieceType::Center(Green),                   // 10
-                PieceType::Edge([Green, Red]),              // 11
-                PieceType::Center(Orange),                  // 12
-                PieceType::Center(Orange),                  // 13
-                PieceType::Edge([Blue, Orange]),            // 14
-                PieceType::Center(Blue),                    // 15
-                PieceType::Edge([Blue, Red]),               // 16
-                PieceType::Corner([Yellow, Orange, Green]), // 17
-                PieceType::Edge([Yellow, Green]),           // 18
-                PieceType::Corner([Yellow, Green, Red]),    // 19
-                PieceType::Edge([Yellow, Orange]),          // 20
-                PieceType::Center(Yellow),                  // 21
-                PieceType::Edge([Yellow, Red]),             // 22
-                PieceType::Corner([Yellow, Blue, Orange]),  // 23
-                PieceType::Edge([Yellow, Blue]),            // 24
-                PieceType::Corner([Yellow, Red, Blue]),     // 25
+                CubeFace::orange(),
+                CubeFace::red(),
+                CubeFace::white(),
+                CubeFace::yellow(),
+                CubeFace::green(),
+                CubeFace::blue(),
             ],
         }
     }
 }
 
-impl Cube3x3 {
-    fn set_data(&mut self, new_positions: &[(usize, usize)]) {
-        let mut data = self.data;
-        for &(from, to) in new_positions {
-            data[to] = self.data[from];
-        }
-        self.data = data;
-    }
+impl Index<FaceIndex> for Cube3x3 {
+    type Output = CubeFace;
 
+    fn index(&self, index: FaceIndex) -> &Self::Output {
+        &self.data[index as usize]
+    }
+}
+
+impl IndexMut<FaceIndex> for Cube3x3 {
+    fn index_mut(&mut self, index: FaceIndex) -> &mut Self::Output {
+        &mut self.data[index as usize]
+    }
+}
+
+impl Cube3x3 {
     pub fn perform_move(&mut self, r#move: Move) {
-        match r#move {
-            Move::R => self.set_data(&[
-                (2, 8),
-                (5, 16),
-                (8, 25),
-                (16, 21),
-                (25, 19),
-                (22, 11),
-                (19, 2),
-                (11, 6),
-            ]),
-            Move::RPrime => {
-                self.perform_move(Move::R);
-                self.perform_move(Move::R);
-                self.perform_move(Move::R)
+        let (axis, dir) = r#move.axis();
+        let layer_mask = r#move.layer_mask();
+        match axis {
+            x @ (MoveAxis::XPositive | MoveAxis::XNegative) => {
+                let pos = matches!(x, MoveAxis::XPositive);
+
+                let top = self[FaceIndex::Top];
+                let bottom = self[FaceIndex::Bottom];
+                let front = self[FaceIndex::Front];
+                let back = self[FaceIndex::Back];
+
+                self[FaceIndex::Top].copy_from_mask(&front, layer_mask);
+                self[FaceIndex::Front].copy_from_mask(&bottom, layer_mask);
+                self[FaceIndex::Bottom].copy_from_mask(&back, layer_mask);
+                self[FaceIndex::Back].copy_from_mask(&top, layer_mask);
+
+                match (dir, pos) {
+                    (MoveAxisDir::ClockWise, true) => self[FaceIndex::Right].rotate_cw(),
+                    (MoveAxisDir::ClockWise, false) => self[FaceIndex::Left].rotate_ccw(),
+                    (MoveAxisDir::CounterClockWise, true) => self[FaceIndex::Right].rotate_ccw(),
+                    (MoveAxisDir::CounterClockWise, false) => self[FaceIndex::Left].rotate_cw(),
+                }
             }
-            Move::L => {
-                self.set_data(&[
-                    (0, 6),
-                    (3, 14),
-                    (6, 23),
-                    (14, 19),
-                    (23, 17),
-                    (20, 9),
-                    (17, 0),
-                    (9, 4),
-                ]);
+            y @ (MoveAxis::YPositive | MoveAxis::YNegative) => {
+                let pos = matches!(y, MoveAxis::YPositive);
+
+                let front = self[FaceIndex::Front];
+                let left = self[FaceIndex::Left];
+                let back = self[FaceIndex::Back];
+                let right = self[FaceIndex::Right];
+
+                self[FaceIndex::Front].copy_from_mask(&right, layer_mask);
+                self[FaceIndex::Left].copy_from_mask(&front, layer_mask);
+                self[FaceIndex::Back].copy_from_mask(&left, layer_mask);
+                self[FaceIndex::Right].copy_from_mask(&back, layer_mask);
+
+                //match (dir, pos) {
+                //    (MoveAxisDir::ClockWise, true) => self[FaceIndex::Top].rotate_cw(),
+                //    (MoveAxisDir::ClockWise, false) => self[FaceIndex::Bottom].rotate_ccw(),
+                //    (MoveAxisDir::CounterClockWise, true) => self[FaceIndex::Top].rotate_ccw(),
+                //    (MoveAxisDir::CounterClockWise, false) => self[FaceIndex::Bottom].rotate_cw(),
+                //}
             }
-            Move::LPrime => {
-                self.perform_move(Move::L);
-                self.perform_move(Move::L);
-                self.perform_move(Move::L)
+            z @ (MoveAxis::ZPositive | MoveAxis::ZNegative) => {
+                let pos = matches!(z, MoveAxis::ZPositive);
+                todo!()
             }
-            Move::U => self.set_data(&[
-                (0, 6),
-                (3, 7),
-                (6, 8),
-                (7, 5),
-                (8, 2),
-                (5, 1),
-                (2, 0),
-                (1, 3),
-            ]),
-            Move::UPrime => {
-                self.perform_move(Move::U);
-                self.perform_move(Move::U);
-                self.perform_move(Move::U)
-            }
-            Move::D => todo!(),
-            Move::DPrime => todo!(),
-            Move::M => todo!(),
-            Move::MPrime => todo!(),
-            Move::S => todo!(),
-            Move::SPrime => todo!(),
-            Move::F => todo!(),
-            Move::FPrime => todo!(),
-            Move::B => todo!(),
-            Move::BPrime => todo!(),
-            Move::E => todo!(),
-            Move::EPrime => todo!(),
         }
     }
 }
 
 pub enum MoveAxis {
-    X,
-    Y,
-    Z,
+    XPositive,
+    XNegative,
+    YPositive,
+    YNegative,
+    ZPositive,
+    ZNegative,
 }
 
+pub enum MoveAxisDir {
+    ClockWise,
+    CounterClockWise,
+}
+
+#[rustfmt::skip]
 pub enum Move {
-    R,
-    RPrime,
-    L,
-    LPrime,
-    U,
-    UPrime,
-    D,
-    DPrime,
-    M,
-    MPrime,
-    S,
-    SPrime,
-    F,
-    FPrime,
-    B,
-    BPrime,
-    E,
-    EPrime,
+    R, RPrime,
+    L, LPrime,
+    U, UPrime,
+    D, DPrime,
+    F, FPrime,
+    B, BPrime,
+    M, MPrime,
+    S, SPrime,
+    E, EPrime,
 }
 
 impl Move {
-    pub fn inverse(&self) -> Self {
+    pub fn layer_mask(&self) -> u64 {
         match self {
-            Self::R => Self::RPrime,
-            Self::RPrime => Self::R,
-            Self::L => Self::LPrime,
-            Self::LPrime => Self::L,
-            Self::U => Self::UPrime,
-            Self::UPrime => Self::U,
-            Self::D => Self::DPrime,
-            Self::DPrime => Self::D,
-            Self::F => Self::FPrime,
-            Self::FPrime => Self::F,
-            Self::B => Self::BPrime,
-            Self::BPrime => Self::B,
-            Self::M => Self::MPrime,
-            Self::MPrime => Self::M,
-            Self::S => Self::SPrime,
-            Self::SPrime => Self::S,
-            Self::E => Self::EPrime,
-            Self::EPrime => Self::E,
+            Move::R | Move::RPrime => (0x3F << 2) | (0x3F << 5) | (0x3F << 8),
+            Move::L | Move::LPrime => (0x3F << 0) | (0x3F << 3) | (0x3F << 6),
+            Move::U | Move::UPrime => (0x3F << 0) | (0x3F << 1) | (0x3F << 2),
+            Move::D | Move::DPrime => (0x3F << 6) | (0x3F << 7) | (0x3F << 8),
+            Move::F | Move::FPrime => todo!("edge case"),
+            Move::B | Move::BPrime => todo!("edge case"),
+            Move::M | Move::MPrime => (0x3F << 1) | (0x3F << 4) | (0x3F | 7),
+            Move::S | Move::SPrime => todo!("edge case"),
+            Move::E | Move::EPrime => (0x3F << 3) | (0x3F << 4) | (0x3F << 5),
         }
     }
 
-    pub fn axis(&self) -> MoveAxis {
+    pub fn axis(&self) -> (MoveAxis, MoveAxisDir) {
+        use MoveAxis::*;
+        use MoveAxisDir::*;
+
         match self {
-            Self::R | Self::RPrime => MoveAxis::X,
-            Self::L | Self::LPrime => MoveAxis::X,
-            Self::M | Self::MPrime => MoveAxis::X,
-            Self::U | Self::UPrime => MoveAxis::Y,
-            Self::D | Self::DPrime => MoveAxis::Y,
-            Self::E | Self::EPrime => MoveAxis::Y,
-            Self::F | Self::FPrime => MoveAxis::Z,
-            Self::B | Self::BPrime => MoveAxis::Z,
-            Self::S | Self::SPrime => MoveAxis::Z,
+            Self::R => (XPositive, ClockWise),
+            Self::RPrime => (XPositive, CounterClockWise),
+            Self::L => (XNegative, ClockWise),
+            Self::LPrime => (XNegative, CounterClockWise),
+            Self::M => (XPositive, ClockWise),
+            Self::MPrime => (XNegative, CounterClockWise),
+            Self::U => (YPositive, ClockWise),
+            Self::UPrime => (YPositive, CounterClockWise),
+            Self::D => (YNegative, ClockWise),
+            Self::DPrime => (YNegative, CounterClockWise),
+            Self::E => (YPositive, ClockWise),
+            Self::EPrime => (YPositive, CounterClockWise),
+            Self::F => (ZPositive, ClockWise),
+            Self::FPrime => (ZPositive, CounterClockWise),
+            Self::B => (ZNegative, ClockWise),
+            Self::BPrime => (ZNegative, CounterClockWise),
+            Self::S => (ZPositive, ClockWise),
+            Self::SPrime => (ZPositive, CounterClockWise),
         }
     }
 }
@@ -207,21 +315,16 @@ mod tests {
         let mut cube = Cube3x3::default();
         let default_cube = Cube3x3::default();
 
-        let mut i = 0;
-        let num = loop {
-            cube.perform_move(Move::R);
-            i += 1;
+        cube.perform_move(Move::R);
+        cube.perform_move(Move::R);
+        cube.perform_move(Move::R);
+        cube.perform_move(Move::R);
 
-            if cube == default_cube {
-                break i;
-            }
-
-            if i % 100 == 0 {
-                eprintln!("{i}");
-            }
-        };
-
-        assert_eq!(num, 4)
+        eprintln!(
+            "{} {} {} {} {} {}",
+            cube.data[0], cube.data[1], cube.data[2], cube.data[3], cube.data[4], cube.data[5]
+        );
+        assert_eq!(cube, default_cube)
     }
 
     #[test]
@@ -233,6 +336,10 @@ mod tests {
         cube.perform_move(Move::L);
         cube.perform_move(Move::L);
 
+        eprintln!(
+            "{} {} {} {} {} {}",
+            cube.data[0], cube.data[1], cube.data[2], cube.data[3], cube.data[4], cube.data[5]
+        );
         assert_eq!(cube, Cube3x3::default());
     }
 
@@ -243,6 +350,10 @@ mod tests {
         cube.perform_move(Move::U);
         cube.perform_move(Move::U);
 
+        eprintln!(
+            "{} {} {} {} {} {}",
+            cube.data[0], cube.data[1], cube.data[2], cube.data[3], cube.data[4], cube.data[5]
+        );
         assert_eq!(cube, Cube3x3::default());
     }
 
@@ -256,7 +367,7 @@ mod tests {
             cube.perform_move(Move::UPrime);
         }
 
-        assert_eq!(cube, Cube3x3::default());
+        assert_eq!(cube.data, Cube3x3::default().data);
     }
 
     #[test]
@@ -269,6 +380,6 @@ mod tests {
             cube.perform_move(Move::U);
         }
 
-        assert_eq!(cube, Cube3x3::default());
+        assert_eq!(cube.data, Cube3x3::default().data);
     }
 }
