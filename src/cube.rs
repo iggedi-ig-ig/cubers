@@ -1,4 +1,8 @@
-use std::{fmt::Debug, ops::IndexMut};
+use std::{
+    fmt::{Debug, Display},
+    hash::Hash,
+    ops::IndexMut,
+};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -41,7 +45,7 @@ impl Color {
 
 /// in this format:
 ///     0bxxxxxxxxxxxxxxxxxxx888887777766666555554444433333222221111100000
-#[derive(Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub struct Face(u64);
 
 impl Face {
@@ -113,6 +117,12 @@ impl Face {
 impl Debug for Face {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_list().entries((0..9).map(|i| self.get(i))).finish()
+    }
+}
+
+impl Hash for Face {
+    fn hash<H: std::hash::Hasher>(&self, state: &mut H) {
+        state.write_u64(self.0)
     }
 }
 
