@@ -57,15 +57,15 @@ impl Face {
     pub const ORANGE: Self = Face(0x84210842108);
 
     pub fn get(&self, index: usize) -> Color {
-        let mask = 0x1F << (5 * index);
-        let masked = (self.0 & mask) >> (5 * index);
+        let mask = 0x1F << (Color::BITS * index);
+        let masked = (self.0 & mask) >> (Color::BITS * index);
         unsafe { Color::from_u8_unchecked(masked as u8) }
     }
 
     pub fn set(&mut self, index: usize, color: Color) {
-        let mask = 0x1F << (5 * index);
+        let mask = 0x1F << (Color::BITS * index);
         self.0 &= !mask;
-        self.0 |= (color as u64) << (5 * index);
+        self.0 |= (color as u64) << (Color::BITS * index);
     }
 
     pub fn copy_from_mask(&mut self, from: &Self, mask: u64) {
@@ -76,11 +76,11 @@ impl Face {
 
     pub fn copy_from_positions(&mut self, from_face: &Self, positions: &[(usize, usize)]) {
         positions.iter().for_each(|&(from, to)| {
-            let from_mask = 0x1f << (5 * from);
-            let to_mask = 0x1f << (5 * to);
+            let from_mask = 0x1f << (Color::BITS * from);
+            let to_mask = 0x1f << (Color::BITS * to);
 
-            let from_bits = (from_face.0 & from_mask) >> (5 * from);
-            let to_bits = from_bits << (5 * to);
+            let from_bits = (from_face.0 & from_mask) >> (Color::BITS * from);
+            let to_bits = from_bits << (Color::BITS * to);
 
             self.0 &= !to_mask;
             self.0 |= to_bits;
@@ -234,7 +234,7 @@ mod tests {
         let mut face = Face(Color::Yellow as u64);
         face.cycle_edges_cw();
 
-        assert_eq!(face, Face((Color::Yellow as u64) << (5 * 2)))
+        assert_eq!(face, Face((Color::Yellow as u64) << (Color::BITS * 2)))
     }
 
     #[test]
@@ -242,7 +242,7 @@ mod tests {
         let mut face = Face(Color::Yellow as u64);
         face.cycle_edges_ccw();
 
-        assert_eq!(face, Face((Color::Yellow as u64) << (5 * 6)))
+        assert_eq!(face, Face((Color::Yellow as u64) << (Color::BITS * 6)))
     }
 
     #[test]
