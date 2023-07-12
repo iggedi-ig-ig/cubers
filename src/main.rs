@@ -38,33 +38,9 @@ fn save_cube(cube: &Cube) {
 }
 
 fn main() {
-    let mut positions = FxHashSet::default();
-    let cube = Cube::default();
-    let start = Instant::now();
+    let mut cube = Cube::default();
 
-    let mut queue = VecDeque::from([cube]);
-    while let Some(next) = queue.pop_front() {
-        if positions.len() % 100000 == 0 {
-            println!("{}", positions.len())
-        }
+    cube.b();
 
-        positions.insert(next);
-        let mut new_state = next;
-        new_state.u();
-
-        if positions.insert(new_state) {
-            queue.push_back(new_state);
-        }
-        let mut new_state = next;
-        new_state.f();
-        if positions.insert(new_state) {
-            queue.push_back(new_state);
-        }
-    }
-
-    println!(
-        "found {} unique positions. took {:?}",
-        positions.len(),
-        start.elapsed()
-    );
+    save_cube(&cube);
 }

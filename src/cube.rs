@@ -53,8 +53,8 @@ impl Face {
     pub const YELLOW: Self = Face(0x10842108421);
     pub const GREEN: Self = Face(0x21084210842);
     pub const BLUE: Self = Face(0x42108421084);
-    pub const RED: Self = Face(0x84210842108);
-    pub const ORANGE: Self = Face(0x108421084210);
+    pub const RED: Self = Face(0x108421084210);
+    pub const ORANGE: Self = Face(0x84210842108);
 
     pub fn get(&self, index: usize) -> Color {
         let mask = 0x1F << (5 * index);
