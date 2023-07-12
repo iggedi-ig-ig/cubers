@@ -10,6 +10,7 @@ use turn::Turnable;
 
 mod cube;
 pub mod turn;
+pub mod solver;
 
 fn save_cube(cube: &Cube) {
     let mut buf = ImageBuffer::new(4 * 3, 3 * 3);

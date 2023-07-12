@@ -1,6 +1,34 @@
 use crate::cube::Cube;
 
+#[rustfmt::skip]
+#[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
+pub enum Move {
+    L, LPrime,
+    R, RPrime,
+    U, UPrime,
+    D, DPrime,
+    F, FPrime,
+    B, BPrime
+}
+
 pub trait Turnable {
+    fn perform(&mut self, r#move: Move) {
+        match r#move {
+            Move::L => self.l(),
+            Move::LPrime => self.lprime(),
+            Move::R => self.r(),
+            Move::RPrime => self.rprime(),
+            Move::U => self.u(),
+            Move::UPrime => self.uprime(),
+            Move::D => self.d(),
+            Move::DPrime => self.dprime(),
+            Move::F => self.f(),
+            Move::FPrime => self.fprime(),
+            Move::B => self.b(),
+            Move::BPrime => self.bprime(),
+        }
+    }
+
     fn r(&mut self);
 
     fn rprime(&mut self) {
@@ -384,6 +412,50 @@ mod tests {
             cube.fprime();
             cube.lprime();
             cube.f();
+        }
+
+        assert_eq!(cube, Cube::default());
+    }
+
+    #[test]
+    fn sune_order() {
+        let mut cube = Cube::default();
+
+        fn sune(cube: &mut Cube) {
+            cube.r();
+            cube.u();
+            cube.rprime();
+            cube.u();
+            cube.r();
+            cube.u();
+            cube.u();
+            cube.rprime();
+        }
+
+        for _ in 0..6 {
+            sune(&mut cube);
+        }
+
+        assert_eq!(cube, Cube::default());
+    }
+
+    #[test]
+    fn antisune_order() {
+        let mut cube = Cube::default();
+
+        fn antisune(cube: &mut Cube) {
+            cube.lprime();
+            cube.uprime();
+            cube.l();
+            cube.uprime();
+            cube.lprime();
+            cube.u();
+            cube.u();
+            cube.l();
+        }
+
+        for _ in 0..6 {
+            antisune(&mut cube);
         }
 
         assert_eq!(cube, Cube::default());
