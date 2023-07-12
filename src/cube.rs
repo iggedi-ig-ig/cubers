@@ -56,18 +56,21 @@ impl Face {
     pub const RED: Self = Face(0x108421084210);
     pub const ORANGE: Self = Face(0x84210842108);
 
+    #[inline]
     pub fn get(&self, index: usize) -> Color {
         let mask = 0x1F << (5 * index);
         let masked = (self.0 & mask) >> (5 * index);
         Color::from_u8(masked as u8)
     }
 
+    #[inline]
     pub fn set(&mut self, index: usize, color: Color) {
         let mask = 0x1F << (5 * index);
         self.0 &= !mask;
         self.0 |= (color as u64) << (5 * index);
     }
 
+    #[inline]
     pub fn copy_from_mask(&mut self, from: &Self, mask: u64) {
         let masked = from.0 & mask;
         self.0 &= !mask;

@@ -10,8 +10,13 @@ pub enum Move {
     F, FPrime,
     B, BPrime
 }
-
 pub trait Turnable {
+    fn perform_all(&mut self, turns: &[Move]) {
+        for &turn in turns {
+            self.perform(turn);
+        }
+    }
+
     fn perform(&mut self, r#move: Move) {
         match r#move {
             Move::L => self.l(),
@@ -133,23 +138,12 @@ impl Turnable for Cube {
         let back = self.back();
         let left = self.left();
 
+        const MASK: u64 = (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2)));
         self.top_mut().cycle_edges_cw();
-        self.front_mut().copy_from_mask(
-            &right,
-            (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2))),
-        );
-        self.right_mut().copy_from_mask(
-            &back,
-            (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2))),
-        );
-        self.back_mut().copy_from_mask(
-            &left,
-            (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2))),
-        );
-        self.left_mut().copy_from_mask(
-            &front,
-            (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2))),
-        );
+        self.front_mut().copy_from_mask(&right, MASK);
+        self.right_mut().copy_from_mask(&back, MASK);
+        self.back_mut().copy_from_mask(&left, MASK);
+        self.left_mut().copy_from_mask(&front, MASK);
     }
 
     fn uprime(&mut self) {
@@ -457,6 +451,24 @@ mod tests {
         for _ in 0..6 {
             antisune(&mut cube);
         }
+
+        assert_eq!(cube, Cube::default());
+    }
+
+    #[test]
+    // Note that the superflip uses all types of turns, so this is a pretty comprehensive test case
+    fn superflip_order() {
+        use Move::*;
+
+        let mut cube = Cube::default();
+        cube.perform_all(&[
+            U, R, R, F, B, R, B, B, R, U, U, L, B, B, R, UPrime, DPrime, R, R, F, RPrime, L, B, B,
+            U, U, F, F,
+        ]);
+        cube.perform_all(&[
+            U, R, R, F, B, R, B, B, R, U, U, L, B, B, R, UPrime, DPrime, R, R, F, RPrime, L, B, B,
+            U, U, F, F,
+        ]);
 
         assert_eq!(cube, Cube::default());
     }

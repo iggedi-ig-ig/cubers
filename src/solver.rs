@@ -13,12 +13,12 @@ use crate::{
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 /// This enum represents a distance to either the solved state, or the scramble of a rubiks cube.
 enum DepthFromEnd {
-    Solved(usize),
-    Unsolved(usize),
+    Solved(u8),
+    Unsolved(u8),
 }
 
 impl DepthFromEnd {
-    pub fn depth(&self) -> usize {
+    pub fn depth(&self) -> u8 {
         match *self {
             DepthFromEnd::Solved(i) => i,
             DepthFromEnd::Unsolved(i) => i,
@@ -57,7 +57,7 @@ impl Solver {
         }
     }
 
-    pub fn solve(&mut self, max_depth: usize) -> Option<usize> {
+    pub fn solve(&mut self, max_depth: u8) -> Option<u8> {
         #[rustfmt::skip]
         const NEIGHBORS: &[Move] = &[
             Move::R, Move::RPrime,
@@ -68,7 +68,13 @@ impl Solver {
             Move::B, Move::BPrime
         ];
 
+        let mut last_depth = 0;
         while let Some((state, started_from)) = self.queue.pop_front() {
+            if last_depth != started_from.depth() {
+                last_depth = started_from.depth();
+                println!("depth: {last_depth}, positions: {}", self.visited.len())
+            }
+
             if started_from.depth() > max_depth {
                 continue;
             }
@@ -238,5 +244,46 @@ mod tests {
 
         let mut solver = Solver::from_state(cube);
         assert_eq!(solver.solve(4), Some(8));
+    }
+
+    #[test]
+    fn checkerboard() {
+        let mut cube = Cube::default();
+
+        cube.r();
+        cube.r();
+
+        cube.l();
+        cube.l();
+
+        cube.f();
+        cube.f();
+
+        cube.b();
+        cube.b();
+
+        cube.u();
+        cube.u();
+
+        cube.d();
+        cube.d();
+
+        let mut solver = Solver::from_state(cube);
+        assert_eq!(solver.solve(6), Some(12));
+    }
+
+    #[test]
+    fn superflip() {
+        use crate::turn::Move::*;
+
+        let mut cube = Cube::default();
+        cube.perform_all(&[
+            U, R, R, B, R, B, B, R, U, U, L, B, B, R, UPrime, DPrime, R, R, F, RPrime, L, B, B, U,
+            U, F, F,
+        ]);
+
+        let mut solver = Solver::from_state(cube);
+
+        assert_eq!(solver.solve(12), Some(24));
     }
 }

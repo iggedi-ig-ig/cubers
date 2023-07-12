@@ -1,16 +1,14 @@
-use std::{
-    collections::{HashSet, VecDeque},
-    time::Instant,
-};
+use std::time::Instant;
 
 use cube::{Color, Cube};
-use fxhash::{FxHashMap, FxHashSet};
 use image::{ImageBuffer, Rgb};
 use turn::Turnable;
 
+use crate::solver::Solver;
+
 mod cube;
-pub mod turn;
 pub mod solver;
+pub mod turn;
 
 fn save_cube(cube: &Cube) {
     let mut buf = ImageBuffer::new(4 * 3, 3 * 3);
@@ -39,9 +37,14 @@ fn save_cube(cube: &Cube) {
 }
 
 fn main() {
+    use turn::Move::*;
+
     let mut cube = Cube::default();
-
-    cube.b();
-
+    cube.perform_all(&[R, L, F, B, R, U, RPrime, UPrime, R, LPrime, U, U, D, D]);
     save_cube(&cube);
+
+    let mut solver = Solver::from_state(cube);
+    let start = Instant::now();
+    println!("{:?}", solver.solve(12));
+    println!("took {:?}", start.elapsed());
 }
