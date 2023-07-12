@@ -22,11 +22,11 @@ fn save_cube(cube: &Cube) {
         Color::Red => Rgb([255, 0, 0]),
     };
     buf.enumerate_pixels_mut().for_each(|(x, y, pixel)| {
-        if y >= 3 && y < 6 {
+        if (3..6).contains(&y) {
             let face = [Cube::LEFT, Cube::FRONT, Cube::RIGHT, Cube::BACK][x as usize / 3];
             let index = (y - 3) * 3 + x - (x / 3) * 3;
             *pixel = col_to_rgb(cube.face(face).get(index as usize));
-        } else if x >= 3 && x < 6 {
+        } else if (3..6).contains(&x) {
             let face = [Cube::TOP, Cube::FRONT, Cube::BOTTOM][y as usize / 3];
             let index = (y - (y / 3) * 3) * 3 + (x - 3);
             *pixel = col_to_rgb(cube.face(face).get(index as usize));

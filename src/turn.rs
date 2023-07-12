@@ -100,29 +100,13 @@ impl Turnable for Cube {
             .copy_from_positions(&top, &[(2, 6), (5, 3), (8, 0)])
     }
 
-    fn rprime(&mut self) {
-        let top = self.top();
-        let front = self.front();
-        let bottom = self.bottom();
-        let back = self.back();
-
-        const MASK: u64 = (0x1F << (5 * 2)) | (0x1f << (5 * 5) | (0x1f << (5 * 8)));
-        self.right_mut().cycle_edges_ccw();
-        self.front_mut().copy_from_mask(&top, MASK);
-        self.bottom_mut().copy_from_mask(&front, MASK);
-        self.back_mut()
-            .copy_from_positions(&bottom, &[(2, 6), (5, 3), (8, 0)]);
-        self.top_mut()
-            .copy_from_positions(&back, &[(0, 8), (3, 5), (6, 2)])
-    }
-
     fn l(&mut self) {
         let top = self.top();
         let front = self.front();
         let bottom = self.bottom();
         let back = self.back();
 
-        const MASK: u64 = (0x1F << (0 * 5)) | (0x1F << (3 * 5)) | (0x1F << (6 * 5));
+        const MASK: u64 = 0x1F | (0x1F << (3 * 5)) | (0x1F << (6 * 5));
         self.left_mut().cycle_edges_cw();
         self.front_mut().copy_from_mask(&top, MASK);
         self.bottom_mut().copy_from_mask(&front, MASK);
@@ -138,27 +122,12 @@ impl Turnable for Cube {
         let back = self.back();
         let left = self.left();
 
-        const MASK: u64 = (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2)));
+        const MASK: u64 = 0x1f | (0x1f << 5 | (0x1f << (5 * 2)));
         self.top_mut().cycle_edges_cw();
         self.front_mut().copy_from_mask(&right, MASK);
         self.right_mut().copy_from_mask(&back, MASK);
         self.back_mut().copy_from_mask(&left, MASK);
         self.left_mut().copy_from_mask(&front, MASK);
-    }
-
-    fn uprime(&mut self) {
-        let front = self.front();
-        let right = self.right();
-        let back = self.back();
-        let left = self.left();
-
-        const MASK: u64 = (0x1f << (5 * 0)) | (0x1f << (5 * 1) | (0x1f << (5 * 2)));
-        self.top_mut().cycle_edges_ccw();
-
-        self.front_mut().copy_from_mask(&left, MASK);
-        self.right_mut().copy_from_mask(&front, MASK);
-        self.back_mut().copy_from_mask(&right, MASK);
-        self.left_mut().copy_from_mask(&back, MASK);
     }
 
     fn d(&mut self) {

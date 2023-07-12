@@ -1,8 +1,4 @@
-use std::{
-    fmt::{Debug, Display},
-    hash::Hash,
-    ops::IndexMut,
-};
+use std::{fmt::Debug, hash::Hash};
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[repr(u8)]
@@ -33,6 +29,10 @@ impl Color {
             n => panic!("unknown color: {n:0>8b}"),
         }
     }
+
+    pub unsafe fn from_u8_unchecked(n: u8) -> Self {
+        std::mem::transmute(n)
+    }
 }
 
 /// This struct represents the colors one one face of a 3x3 rubiks cube.
@@ -56,21 +56,18 @@ impl Face {
     pub const RED: Self = Face(0x108421084210);
     pub const ORANGE: Self = Face(0x84210842108);
 
-    #[inline]
     pub fn get(&self, index: usize) -> Color {
         let mask = 0x1F << (5 * index);
         let masked = (self.0 & mask) >> (5 * index);
-        Color::from_u8(masked as u8)
+        unsafe { Color::from_u8_unchecked(masked as u8) }
     }
 
-    #[inline]
     pub fn set(&mut self, index: usize, color: Color) {
         let mask = 0x1F << (5 * index);
         self.0 &= !mask;
         self.0 |= (color as u64) << (5 * index);
     }
 
-    #[inline]
     pub fn copy_from_mask(&mut self, from: &Self, mask: u64) {
         let masked = from.0 & mask;
         self.0 &= !mask;
@@ -78,7 +75,7 @@ impl Face {
     }
 
     pub fn copy_from_positions(&mut self, from_face: &Self, positions: &[(usize, usize)]) {
-        positions.into_iter().for_each(|&(from, to)| {
+        positions.iter().for_each(|&(from, to)| {
             let from_mask = 0x1f << (5 * from);
             let to_mask = 0x1f << (5 * to);
 

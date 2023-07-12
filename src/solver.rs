@@ -1,7 +1,4 @@
-use std::{
-    collections::{hash_map::Entry, VecDeque},
-    f32::consts::E,
-};
+use std::collections::{hash_map::Entry, VecDeque};
 
 use fxhash::FxHashMap;
 
