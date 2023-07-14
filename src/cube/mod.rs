@@ -3,8 +3,6 @@
 
 use std::ops::{Index, IndexMut};
 
-use itertools::Itertools;
-
 use self::turn::{TurnAxis, TurnDirection};
 
 pub mod turn;
@@ -75,6 +73,7 @@ impl<const N: usize> Cube<N> {
                 for (i, ele) in involved_faces.into_iter().enumerate() {
                     let next = (i + 1) % involved_faces.len();
                     let (from, to) = (ele, involved_faces[next]);
+                    todo!()
                 }
             }
             i => panic!("tried to turn layer {i} of cube with {N} layers."),
