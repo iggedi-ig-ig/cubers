@@ -14,6 +14,11 @@ pub struct Pyraminx {
 }
 
 impl Pyraminx {
+    pub const FRONT: usize = 0;
+    pub const LEFT: usize = 1;
+    pub const RIGHT: usize = 2;
+    pub const BOTTOM: usize = 3;
+
     pub fn perform_turn(&mut self, turn: Turn) {
         match turn {
             Turn::Left => self.l(),
@@ -51,8 +56,11 @@ pub struct Face {
 }
 
 impl Face {
-    pub fn copy_from(&mut self, other: &Self, positions: &[(usize, usize)]) {
-        todo!()
+    /// Copies the given positions from another Face to this face.
+    pub fn copy_from_positions(&mut self, other: &Self, positions: &[(usize, usize)]) {
+        for &(from, to) in positions {
+            self.data[to] = other.data[from];
+        }
     }
 }
 

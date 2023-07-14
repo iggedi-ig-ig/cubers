@@ -33,10 +33,19 @@ impl TurnAxis {
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 pub enum TurnDirection {
-    Positive,
-    Negative,
+    /// Clockwise rotation
+    Cw,
+    /// Counter clockwise rotation
+    Ccw,
 }
 
 impl TurnDirection {
-    pub const VALUES: &[Self] = &[Self::Positive, Self::Negative];
+    pub const VALUES: &[Self] = &[Self::Cw, Self::Ccw];
+
+    pub fn inverse(&self) -> Self {
+        match *self {
+            Self::Cw => Self::Ccw,
+            Self::Ccw => Self::Cw,
+        }
+    }
 }
