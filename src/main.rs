@@ -1,7 +1,7 @@
 use pyraminx::Pyraminx;
 
 use crate::{
-    bidisearch::{Solver, Turnable},
+    bidisearch::{Solution, Solver, Turnable},
     pyraminx::PyraminxTurn,
 };
 
@@ -20,7 +20,9 @@ fn main() {
         .make_turn(Right)
         .make_turn(Up)
         .make_turn(Left)
-        .make_turn(Right);
+        .make_turn(Right)
+        .make_turn(BackPrime)
+        .make_turn(Left);
 
     let mut solver = Solver::from_state(pyraminx);
     dbg!(solver.try_solve(6));

@@ -36,7 +36,6 @@ pub struct Cube<const N: usize> {
 impl<const N: usize> Cube<N> {
     pub fn perform_turn(
         &mut self,
-        _other: &Self,
         layer: usize,
         axis: TurnAxis,
         dir: TurnDirection,
@@ -73,7 +72,8 @@ impl<const N: usize> Cube<N> {
                 for (i, ele) in involved_faces.into_iter().enumerate() {
                     let next = (i + 1) % involved_faces.len();
                     let (from, to) = (ele, involved_faces[next]);
-                    todo!()
+
+                    // to.copy_from(&from, &[]);
                 }
             }
             i => panic!("tried to turn layer {i} of cube with {N} layers."),

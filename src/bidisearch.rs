@@ -57,7 +57,6 @@ impl<C: Turnable> Solver<C> {
         }
     }
 
-    /// TODO: return solution, not number of moves to solution
     pub fn try_solve(&mut self, max_depth: usize) -> Option<Solution<C::Turn>> {
         let start = Instant::now();
         let mut last_depth = 0;
