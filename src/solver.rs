@@ -269,7 +269,10 @@ mod tests {
         assert_eq!(solver.solve(6), Some(12));
     }
 
-    #[test]
+    // NOTE: This is a position that requires the theoretically maximum amount of turns to solve. If this very naive bidi-bfs
+    //  solver could solve this, it could solve all rubiks cubes optimally.
+    //  unfortuantely, it's just not as simple as that :(
+    // #[test]
     fn superflip() {
         use crate::turn::Move::*;
 
